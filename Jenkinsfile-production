@@ -1,0 +1,30 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Download archive') {
+            steps {
+                withAWS(region:'eu-central-1',credentials:'devops-aws-credential') {
+                s3Download(path:"production/app-build-production-${APP_BRANCH}-${APP_BUILD_NUMBER}.tar.gz", bucket:'devopstask-app-archive', file:"app-build-production-${APP_BRANCH}-${APP_BUILD_NUMBER}.tar.gz");               
+                }
+            }
+        }
+    
+
+        stage('Unpack archive') {
+            steps {
+                sh '''
+                    tar -xvf app-build-production-${APP_BRANCH}-${APP_BUILD_NUMBER}.tar.gz
+                '''
+            }
+        }
+        
+        stage('Upload production') {
+            steps {
+                withAWS(region:'eu-central-1',credentials:'devops-aws-credential') {
+                s3Upload(file:'build/', bucket:'devopstask-app-production');
+                }
+            }
+        }
+    }
+}
